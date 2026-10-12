@@ -13,6 +13,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { basename, resolve } from "node:path";
 import { PNG } from "pngjs";
 import jpeg from "jpeg-js";
+import ts from "typescript";
 import { PALETTE, rgb } from "../art/palette.ts";
 
 const root = resolve(import.meta.dir, "..");
@@ -98,11 +99,31 @@ const projects = readdirSync(projectDir).filter(file => file.endsWith(".md")).so
   };
 }).sort((a, b) => a.position - b.position);
 
+/**
+ * Read a JS literal of arrays, objects and plain strings as data. Anything
+ * else (calls, identifiers, interpolated templates) is rejected, so syncing
+ * never runs code from the checkout.
+ */
+function literal(node: ts.Node): unknown {
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
+  if (ts.isArrayLiteralExpression(node)) return node.elements.map(literal);
+  if (ts.isObjectLiteralExpression(node)) {
+    return Object.fromEntries(node.properties.map(property => {
+      if (!ts.isPropertyAssignment(property) || !(ts.isIdentifier(property.name) || ts.isStringLiteral(property.name))) {
+        throw new Error(`unsupported property: ${property.getText()}`);
+      }
+      return [property.name.text, literal(property.initializer)];
+    }));
+  }
+  throw new Error(`unsupported value: ${node.getText()}`);
+}
+
 // Experience lives in pages/experience.vue as an array literal.
 const experienceSource = readFileSync(resolve(site, "pages/experience.vue"), "utf8");
-const literal = /const expItems: ExpItem\[\] = (\[[\s\S]*?\n\])/.exec(experienceSource)?.[1];
-if (!literal) throw new Error("pages/experience.vue: expItems array not found");
-const experience = (new Function(`return ${literal}`)() as { start: string; end: string; title: string; at: string; description: string }[])
+const expItems = /const expItems: ExpItem\[\] = (\[[\s\S]*?\n\])/.exec(experienceSource)?.[1];
+if (!expItems) throw new Error("pages/experience.vue: expItems array not found");
+const expression = (ts.createSourceFile("expItems.ts", `(${expItems})`, ts.ScriptTarget.Latest, true).statements[0] as ts.ExpressionStatement).expression;
+const experience = (literal(ts.isParenthesizedExpression(expression) ? expression.expression : expression) as { start: string; end: string; title: string; at: string; description: string }[])
   .map(item => ({ title: item.title, at: item.at, start: item.start, end: item.end, description: plain(item.description) }));
 
 // The home page: intro paragraph and the three guiding principles.

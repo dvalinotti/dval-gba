@@ -55,9 +55,11 @@ const TOUR: [string | null, string][] = all ? [
 
 rmSync(raw, { recursive: true, force: true });
 mkdirSync(raw, { recursive: true });
-mkdirSync(out, { recursive: true });
 const play = Bun.spawnSync([runner, rom, raw, ...TOUR.map(([, step]) => step)], { stdout: "inherit", stderr: "inherit" });
 if (play.exitCode !== 0) throw new Error("mGBA run failed");
+// Start the output from empty so renamed or removed screens don't linger.
+rmSync(out, { recursive: true, force: true });
+mkdirSync(out, { recursive: true });
 
 function scaled(rgba: Uint8Array, x0: number, y0: number, target: PNG) {
   for (let y = 0; y < H * SCALE; y++) for (let x = 0; x < W * SCALE; x++) {
