@@ -4,8 +4,9 @@
  *
  *   bun scripts/sync-content.ts [path/to/dval.dev]   (default ../dval.dev)
  *
- * Writes content/site.json and pixelates each project's image into
- * assets/projects/<slug>.png (32 × 32, snapped to the Sweetie 16 palette).
+ * Writes content/site.json, pixelates each project's image into
+ * assets/projects/<slug>.png (32 × 32, snapped to the Sweetie 16 palette) and
+ * the home page photo into assets/portrait.png (64 × 64, 16 colors of its own).
  * Both are committed, so building the ROM never needs the website checkout.
  * Hand edits belong in content/overrides.json, which this script never touches.
  */
@@ -19,7 +20,7 @@ import { PALETTE, rgb } from "../art/palette.ts";
 const root = resolve(import.meta.dir, "..");
 const site = resolve(process.argv[2] ?? resolve(root, "../dval.dev"));
 if (!existsSync(resolve(site, "content/projects"))) throw new Error(`${site} is not a dval.dev checkout (no content/projects)`);
-const LOGO = 32;
+const LOGO = 32, PORTRAIT = 64, PORTRAIT_COLORS = 16;
 
 /** Collapse markup and whitespace into one line of plain text. */
 function plain(text: string): string {
@@ -86,6 +87,53 @@ function pixelate(source: string, out: string, size: number) {
   writeFileSync(out, PNG.sync.write(png));
 }
 
+/**
+ * The home page avatar as a pixel portrait: the top square of the photo (the
+ * site crops it with object-fit: cover, object-position: top), area-averaged
+ * to size × size, reduced to its own `colors` with k-means so skin and hair
+ * keep their tones, then masked to a circle with a 2 px white ring like the
+ * site's border. Colors are rounded to the GBA's 5 bits per channel.
+ */
+function portrait(source: string, out: string, size: number, colors: number) {
+  const image = decode(source), side = Math.min(image.width, image.height), scale = side / size;
+  const x0 = (image.width - side) / 2;
+  const pixels: number[][] = [];
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    let r = 0, g = 0, b = 0, n = 0;
+    for (let sy = Math.floor(y * scale); sy < Math.ceil((y + 1) * scale); sy++) {
+      for (let sx = Math.floor(x0 + x * scale); sx < Math.ceil(x0 + (x + 1) * scale); sx++) {
+        const at = (sy * image.width + sx) * 4;
+        r += image.data[at]!; g += image.data[at + 1]!; b += image.data[at + 2]!; n++;
+      }
+    }
+    pixels.push([r / n, g / n, b / n]);
+  }
+  // Luma-weighted distance, so the palette spends its colors where eyes notice.
+  const distance = (a: number[], b: number[]) => 0.3 * (a[0]! - b[0]!) ** 2 + 0.59 * (a[1]! - b[1]!) ** 2 + 0.11 * (a[2]! - b[2]!) ** 2;
+  const closest = (pixel: number[], centers: number[][]) => {
+    let best = 0;
+    centers.forEach((center, i) => { if (distance(center, pixel) < distance(centers[best]!, pixel)) best = i; });
+    return best;
+  };
+  let centers = Array.from({ length: colors }, (_, i) => pixels[Math.floor((i + 0.5) * pixels.length / colors)]!.slice());
+  for (let round = 0; round < 30; round++) {
+    const sums = centers.map(() => [0, 0, 0, 0]);
+    for (const pixel of pixels) {
+      const sum = sums[closest(pixel, centers)]!;
+      sum[0]! += pixel[0]!; sum[1]! += pixel[1]!; sum[2]! += pixel[2]!; sum[3]!++;
+    }
+    centers = sums.map((sum, i) => sum[3] ? [sum[0]! / sum[3]!, sum[1]! / sum[3]!, sum[2]! / sum[3]!] : centers[i]!);
+  }
+  centers = centers.map(center => center.map(channel => Math.min(248, Math.round(channel / 8) * 8)));
+  const ring = rgb(PALETTE.c), radius = size / 2;
+  const png = new PNG({ width: size, height: size });
+  pixels.forEach((pixel, i) => {
+    const x = i % size, y = Math.floor(i / size), from = Math.hypot(x + 0.5 - radius, y + 0.5 - radius);
+    png.data.set(from > radius ? [0, 0, 0, 0] : from > radius - 2 ? [...ring, 255] : [...centers[closest(pixel, centers)]!, 255], i * 4);
+  });
+  writeFileSync(out, PNG.sync.write(png));
+}
+
 // Projects, in the order dval.dev/projects lists them.
 const projectDir = resolve(site, "content/projects");
 mkdirSync(resolve(root, "assets/projects"), { recursive: true });
@@ -132,6 +180,9 @@ const intro = plain(/<h1[^>]*>([\s\S]*?)<\/h1>\s*<p[^>]*>([\s\S]*?)<\/p>/.exec(h
 const principles = [...home.matchAll(/<h3[^>]*>([\s\S]*?)<\/h3>\s*<p class="sidebar">([\s\S]*?)<\/p>/g)]
   .map(match => ({ title: plain(match[1]!), text: plain(match[2]!) }));
 if (!intro || principles.length !== 3) throw new Error("pages/index.vue: intro or principles not found");
+const avatar = /src="\/([^"]+)"/.exec(readFileSync(resolve(site, "components/Avatar.vue"), "utf8"))?.[1];
+if (!avatar) throw new Error("components/Avatar.vue: photo not found");
+portrait(resolve(site, "public", avatar), resolve(root, "assets/portrait.png"), PORTRAIT, PORTRAIT_COLORS);
 
 // Contact details from the footer's social links.
 const footer = readFileSync(resolve(site, "components/Footer.vue"), "utf8");
@@ -143,6 +194,7 @@ const commit = Bun.spawnSync(["git", "rev-parse", "--short", "HEAD"], { cwd: sit
 const content = {
   source: { repository: "dvalinotti/dval.dev", commit },
   name: "Dan Valinotti",
+  portrait: "portrait.png",
   intro,
   principles,
   projects,

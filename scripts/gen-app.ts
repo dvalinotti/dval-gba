@@ -127,12 +127,14 @@ const counter = (index: number, count: number) => `${String(index + 1).padStart(
 const pages: Page[] = [];
 const add = (name: string, elements: Element[]) => { pages.push({ name, elements }); return pages.length - 1; };
 
+// The title is the home page's hero: the portrait over the name. The header
+// bar already says dval.dev.
 const TITLE = add("title", [
-  text(center("PRESS START"), 132, "PRESS START", COLOR.heading),
-  text(center("DVAL.DEV", 3), 40, "DVAL.DEV", COLOR.text, 3),
-  { kind: "box", x: center("DVAL.DEV", 3), y: 68, w: 8 * 3 * 8, h: 2, color: COLOR.accent },
-  text(center(site.name.toUpperCase(), 2), 82, site.name.toUpperCase(), COLOR.text, 2),
-  text(center("SOFTWARE ENGINEER"), 106, "SOFTWARE ENGINEER", COLOR.accent),
+  text(center("PRESS START"), FOOTER_Y, "PRESS START", COLOR.heading),
+  { kind: "image", x: 120 - 32, y: HEADING_Y, w: 64, h: 64, src: site.portrait },
+  text(center(site.name.toUpperCase(), 2), 97, site.name.toUpperCase(), COLOR.text, 2),
+  { kind: "box", x: center(site.name.toUpperCase(), 2), y: 115, w: site.name.length * 16, h: 2, color: COLOR.accent },
+  text(center("SOFTWARE ENGINEER"), 123, "SOFTWARE ENGINEER", COLOR.accent),
 ]);
 
 const SECTIONS = [

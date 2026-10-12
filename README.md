@@ -17,7 +17,7 @@
 
 The GBA can't run a JavaScript engine, so nothing here runs JavaScript on the cartridge. PocketJS's GBA host compiles the app ahead of time and pre-renders everything that can change:
 
-1. `scripts/sync-content.ts` lifts the content out of a [dval.dev](https://github.com/dvalinotti/dval.dev) checkout: projects from `content/projects/*.md`, roles from `pages/experience.vue`, the intro and guiding principles from `pages/index.vue`, and contact links from the footer. It writes `content/site.json` and pixelates each project image to 32 × 32 in the [Sweetie 16](https://lospec.com/palette-list/sweetie-16) palette (`assets/projects/`).
+1. `scripts/sync-content.ts` lifts the content out of a [dval.dev](https://github.com/dvalinotti/dval.dev) checkout: projects from `content/projects/*.md`, roles from `pages/experience.vue`, the intro and guiding principles from `pages/index.vue`, contact links from the footer, and the photo from `components/Avatar.vue`. It writes `content/site.json`, pixelates each project image to 32 × 32 in the [Sweetie 16](https://lospec.com/palette-list/sweetie-16) palette (`assets/projects/`), and turns the photo into a 64 × 64, 16-color portrait for the title screen (`assets/portrait.png`).
 2. `scripts/gen-app.ts` lays every page out on an 8 px font grid, wraps and fits the copy, and writes the view (`app/app.tsx`) and page constants (`app/pages.ts`). Navigation lives in the hand-written model, `app/app.ts`.
 3. `host/build.ts` compiles the app with MicroTS, solves the layout at build time, renders every page and heartbeat frame on the desktop, packs them into GBA tiles, and links the ROM.
 
@@ -70,7 +70,7 @@ The GBA has 32 KiB of sprite memory and 128 sprites. One page frame takes 28 KiB
 | --- | --- |
 | `app/` | The PocketJS app: model (`app.ts`), generated view and page constants |
 | `art/` | Palette and hand-drawn pixel sprites |
-| `assets/` | Pixelated project logos and the font (OFL) |
+| `assets/` | Pixelated portrait and project logos, and the font (OFL) |
 | `content/` | Content lifted from dval.dev |
 | `host/` | The GBA host, adapted from PocketJS; see [host/README.md](host/README.md) |
 | `scripts/` | Content sync, page generation, art, font and screenshot tools |

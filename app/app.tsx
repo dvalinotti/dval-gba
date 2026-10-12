@@ -30,11 +30,11 @@ export default function App() {
       <View debugName="Screen" class="absolute left-[8] top-[16] w-[224] h-[144]">
         {/* title */}
         <Show when={page() === 0}>
-          <Text class="absolute left-[68] top-[116] w-[88] h-[8] text-xs text-[#ffcd75]">{"PRESS START"}</Text>
-          <Text class="absolute left-[16] top-[24] w-[192] h-[24] text-2xl font-bold text-[#f4f4f4]">{"DVAL.DEV"}</Text>
-          <View class="absolute left-[16] top-[52] w-[192] h-[2] bg-[#73eff7]" />
-          <Text class="absolute left-[8] top-[66] w-[208] h-[16] text-base font-bold text-[#f4f4f4]">{"DAN VALINOTTI"}</Text>
-          <Text class="absolute left-[44] top-[90] w-[136] h-[8] text-xs text-[#73eff7]">{"SOFTWARE ENGINEER"}</Text>
+          <Text class="absolute left-[68] top-[129] w-[88] h-[8] text-xs text-[#ffcd75]">{"PRESS START"}</Text>
+          <Image class="absolute left-[80] top-[10] w-[64] h-[64]" src="portrait.png" />
+          <Text class="absolute left-[8] top-[81] w-[208] h-[16] text-base font-bold text-[#f4f4f4]">{"DAN VALINOTTI"}</Text>
+          <View class="absolute left-[8] top-[99] w-[208] h-[2] bg-[#73eff7]" />
+          <Text class="absolute left-[44] top-[107] w-[136] h-[8] text-xs text-[#73eff7]">{"SOFTWARE ENGINEER"}</Text>
         </Show>
         {/* menu-0 */}
         <Show when={page() === 1}>
