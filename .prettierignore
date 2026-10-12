@@ -1,0 +1,10 @@
+# Not ours, or not source.
+vendor/
+node_modules/
+.build/
+dist/
+bun.lock
+host/Cargo.lock
+host/bake/Cargo.lock
+# Written by scripts/sync-content.ts with JSON.stringify.
+content/site.json

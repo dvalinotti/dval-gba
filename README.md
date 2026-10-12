@@ -6,12 +6,12 @@
 
 ## Controls
 
-| Button | Action |
-| --- | --- |
-| Start or A | Leave the title screen; open the selected section |
-| Up / Down | Move through the main menu |
-| Left / Right, L / R | Previous or next page in a section |
-| B | Back to the menu (and from the menu, to the title) |
+| Button              | Action                                             |
+| ------------------- | -------------------------------------------------- |
+| Start or A          | Leave the title screen; open the selected section  |
+| Up / Down           | Move through the main menu                         |
+| Left / Right, L / R | Previous or next page in a section                 |
+| B                   | Back to the menu (and from the menu, to the title) |
 
 ## How it works
 
@@ -53,8 +53,14 @@ Pages only show as many whole sentences as fit. To write shorter copy for the ca
 
 ```json
 {
-  "projects": { "hum-by-colgate": { "description": "Headless Shopify store for a new Colgate brand, built with Nuxt." } },
-  "experience": { "Google": { "description": "Built creative tools for Google Ads." } }
+  "projects": {
+    "hum-by-colgate": {
+      "description": "Headless Shopify store for a new Colgate brand, built with Nuxt."
+    }
+  },
+  "experience": {
+    "Google": { "description": "Built creative tools for Google Ads." }
+  }
 }
 ```
 
@@ -66,16 +72,16 @@ The GBA has 32 KiB of sprite memory and 128 sprites. One page frame takes 28 KiB
 
 ## Layout
 
-| Path | What it is |
-| --- | --- |
-| `app/` | The PocketJS app: model (`app.ts`), generated view and page constants |
-| `art/` | Palette and hand-drawn pixel sprites |
-| `assets/` | Pixelated portrait and project logos, and the font (OFL) |
-| `content/` | Content lifted from dval.dev |
-| `host/` | The GBA host, adapted from PocketJS; see [host/README.md](host/README.md) |
-| `scripts/` | Content sync, page generation, art, font and screenshot tools |
-| `tools/shots.c` | Headless mGBA runner used for screenshots |
-| `vendor/pocketjs` | PocketJS, pinned as a git submodule |
+| Path              | What it is                                                                |
+| ----------------- | ------------------------------------------------------------------------- |
+| `app/`            | The PocketJS app: model (`app.ts`), generated view and page constants     |
+| `art/`            | Palette and hand-drawn pixel sprites                                      |
+| `assets/`         | Pixelated portrait and project logos, and the font (OFL)                  |
+| `content/`        | Content lifted from dval.dev                                              |
+| `host/`           | The GBA host, adapted from PocketJS; see [host/README.md](host/README.md) |
+| `scripts/`        | Content sync, page generation, art, font and screenshot tools             |
+| `tools/shots.c`   | Headless mGBA runner used for screenshots                                 |
+| `vendor/pocketjs` | PocketJS, pinned as a git submodule                                       |
 
 ## Credits
 

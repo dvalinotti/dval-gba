@@ -18,11 +18,21 @@
       "solid-js": ["./vendor/pocketjs/node_modules/solid-js"],
       "solid-js/*": ["./vendor/pocketjs/node_modules/solid-js/*"],
       "@pocketjs/framework/solid": ["./vendor/pocketjs/framework/src/index.ts"],
-      "@pocketjs/framework/solid/std": ["./vendor/pocketjs/framework/src/std-microts.ts"],
-      "@pocketjs/framework/solid/components": ["./vendor/pocketjs/framework/src/components.ts"],
-      "@pocketjs/framework/solid/lifecycle": ["./vendor/pocketjs/framework/src/lifecycle.ts"],
-      "@pocketjs/framework/input": ["./vendor/pocketjs/framework/src/input-api.ts"],
-      "@pocketjs/framework/animation": ["./vendor/pocketjs/framework/src/animation.ts"]
+      "@pocketjs/framework/solid/std": [
+        "./vendor/pocketjs/framework/src/std-microts.ts"
+      ],
+      "@pocketjs/framework/solid/components": [
+        "./vendor/pocketjs/framework/src/components.ts"
+      ],
+      "@pocketjs/framework/solid/lifecycle": [
+        "./vendor/pocketjs/framework/src/lifecycle.ts"
+      ],
+      "@pocketjs/framework/input": [
+        "./vendor/pocketjs/framework/src/input-api.ts"
+      ],
+      "@pocketjs/framework/animation": [
+        "./vendor/pocketjs/framework/src/animation.ts"
+      ]
     }
   },
   "include": ["app", "art", "scripts", "host/*.ts"]

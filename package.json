@@ -7,13 +7,16 @@
     "sync": "bun scripts/sync-content.ts",
     "build": "bun scripts/gen-app.ts && bun host/build.ts",
     "preview": "bun scripts/screenshots.ts",
-    "typecheck": "tsc --noEmit -p ."
+    "typecheck": "tsc --noEmit -p .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@types/bun": "^1.4.3",
     "@types/pngjs": "^6.0.5",
     "jpeg-js": "0.4.4",
     "pngjs": "7.0.0",
+    "prettier": "3.9.10",
     "qrcode-generator": "1.4.4",
     "typescript": "5.9.3"
   }
