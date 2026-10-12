@@ -80,13 +80,14 @@ const DIAG_BASE: usize = 0x02000000;
 ///
 /// The cartridge clears words 0 to 63 at boot. `diag` writes a word and
 /// `diagnostic` reads one back. Tools read them from emulator memory:
-/// `tools/shots.c` prints words 0 to 31 when `DIAG` is set and reports a
-/// fault from words 2, 13 and 16. `tools/shots.c` and `AGENTS.md` refer to
-/// these numbers, so an index must not change.
+/// `tools/shots.c` prints all 64 when `DIAG` is set and reports a fault
+/// from words 2, 13 and 16. `tools/shots.c` and `AGENTS.md` refer to these
+/// numbers, so an index must not change.
 ///
 /// `gba_irq` in `start.s` writes words 4, 22, 24, 25 and the key queue by
-/// address. Word 10 is no longer written: upstream published the Hero
-/// counter there. Words 48 to 63 are cleared at boot and not used otherwise.
+/// address. Words 10 and 28 to 30 are no longer written: upstream published
+/// the Hero counter at 10 and layer state from 28, which put a fourth
+/// layer's word on `BRANCH_FAULTS` and a fifth's in the key queue.
 mod diag_word {
     /// 0x50474241, the ASCII bytes "PGBA" read as a hex number. Written
     /// first at boot.
@@ -154,18 +155,18 @@ mod diag_word {
     pub const PRESENT_BYTES: usize = 26;
     /// Largest `PRESENT_BYTES` since boot.
     pub const PEAK_PRESENT_BYTES: usize = 27;
-    /// First per-layer state word: layer n of `art::LAYERS` writes word
-    /// 28 + n, for up to 16 layers. See `Scene::update` for what each kind
-    /// of layer writes. Words 28 to 30 fit three layers. A fourth layer's
-    /// word is 31, which `BRANCH_FAULTS` then overwrites, and later layers
-    /// write over the key queue at 32.
-    pub const LAYER_STATE: usize = 28;
     /// How many times a branches layer found more than one mounted child
     /// matching its frames (`Scene::faults`).
     pub const BRANCH_FAULTS: usize = 31;
     /// First of the 16 key queue slots `gba_irq` fills: slot n is word
     /// 32 + n, and a state goes into slot (write count mod 16).
     pub const KEY_QUEUE: usize = 32;
+    /// First per-layer state word: layer n of `art::LAYERS` writes word
+    /// 48 + n. See `Scene::update` for what each kind of layer writes.
+    pub const LAYER_STATE: usize = 48;
+    /// Layers with a state word, up to the last cleared word. Layers past
+    /// these are not published.
+    pub const LAYER_STATE_WORDS: usize = COUNT - LAYER_STATE;
     /// Number of words the cartridge clears at boot.
     pub const COUNT: usize = 64;
 }
@@ -466,9 +467,10 @@ pub unsafe extern "C" fn gba_main() -> ! {
         app.frame(&Input::buttons(buttons));
         let model_end = cycles();
         scene.update(app.ui());
-        // Words 28.. publish each layer's state in plan order (branch index,
+        // Words 48.. publish each layer's state in plan order (branch index,
         // visibility, size value, color bits, glyph count).
-        for (index, value) in scene.state.iter().enumerate().take(16) {
+        let published = scene.state.iter().take(diag_word::LAYER_STATE_WORDS);
+        for (index, value) in published.enumerate() {
             diag(diag_word::LAYER_STATE + index, *value);
         }
         diag(diag_word::BRANCH_FAULTS, scene.faults);

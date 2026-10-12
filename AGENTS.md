@@ -62,6 +62,6 @@ Prettier formats the TypeScript, JSON and Markdown, with the same settings as dv
 2. `bun run build`. Read the budget line it prints (`OAM …/128, OBJ VRAM …/32768 B`).
 3. `bun run preview`, then look at the screenshots. The runner exits with an error if the ROM faults. For a new or changed page, run `bun scripts/screenshots.ts --all` and check every page, not just the tour.
 
-With `DIAG=1` set, `tools/shots.c` also prints the 32 diagnostic words the host writes at the start of EWRAM (0x02000000). `host/src/main.rs` writes them with `diag(index, value)`. Word 2 is `0xdead` after a fault and word 13 holds the fault code. Word 5 is the last frame's cycle count and word 6 the peak, word 7 counts missed frames, word 9 is peak heap and word 20 is stack use.
+With `DIAG=1` set, `tools/shots.c` also prints the 64 diagnostic words the host writes at the start of EWRAM (0x02000000). `host/src/main.rs` writes them with `diag(index, value)`. Word 2 is `0xdead` after a fault and word 13 holds the fault code. Word 5 is the last frame's cycle count and word 6 the peak, word 7 counts missed frames, word 9 is peak heap, word 20 is stack use, and words 48 on hold each sprite layer's state (word 49 is the page shown).
 
 Commit the regenerated `app/` files and any screenshots that changed alongside the source change that produced them. The ROM itself (`dist/`) and `.build/` are not committed.

@@ -61,7 +61,8 @@ int main(int argc, char** argv) {
   }
   // The host publishes diagnostic words at the start of EWRAM (host/src/main.rs):
   // word 2 is 0xdead after a fault, word 13 the fault code, word 16 a panic line.
-  if (getenv("DIAG")) for (int i = 0; i < 32; i++) fprintf(stderr, "diag %2d = %u\n", i, core->rawRead32(core, 0x02000000 + i * 4, -1));
+  // There are 64; words 48 on hold each sprite layer's state.
+  if (getenv("DIAG")) for (int i = 0; i < 64; i++) fprintf(stderr, "diag %2d = %u\n", i, core->rawRead32(core, 0x02000000 + i * 4, -1));
   if (core->rawRead32(core, 0x02000008, -1) == 0xdead) {
     fprintf(stderr, "ROM faulted: code %u, panic line %u\n", core->rawRead32(core, 0x02000034, -1), core->rawRead32(core, 0x02000040, -1));
     return 3;

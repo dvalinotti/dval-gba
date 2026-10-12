@@ -107,11 +107,13 @@ const shots = TOUR.map(([name], index) => [name, index] as const).filter(
 // The contact sheet: every named shot in a grid.
 const columns = all ? 4 : 3
 const gap = 12
+/** The opaque dark gray between shots, as RGBA. */
+const BACKGROUND = [0x22, 0x22, 0x22, 0xff]
 const sheet = new PNG({
   width: columns * (W * SCALE + gap) + gap,
   height: Math.ceil(shots.length / columns) * (H * SCALE + gap) + gap
 })
-sheet.data.fill(0x22)
+for (let at = 0; at < sheet.data.length; at += 4) sheet.data.set(BACKGROUND, at)
 shots.forEach(([name, index], i) => {
   const rgba = new Uint8Array(
     readFileSync(resolve(raw, `${String(index).padStart(2, '0')}.rgba`))
