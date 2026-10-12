@@ -1,0 +1,26 @@
+{
+  "$schema": "https://pocketjs.dev/schema/pocket-2.json",
+  "pocket": 2,
+  "id": "dev.dval.gba",
+  "name": "dval-gba",
+  "title": "dval.dev",
+  "version": "0.1.0",
+  "engine": {
+    "capabilities": {
+      "requires": ["text.glyphs.baked", "input.buttons"]
+    }
+  },
+  "app": {
+    "entry": "app/main.tsx",
+    "output": "dval-gba-main",
+    "framework": "solid",
+    "viewport": {
+      "fixed": {
+        "logical": [240, 160],
+        "presentation": "integer-fit"
+      }
+    },
+    "aot": true,
+    "model": "compiled"
+  }
+}

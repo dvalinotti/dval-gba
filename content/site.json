@@ -1,0 +1,183 @@
+{
+  "source": {
+    "repository": "dvalinotti/dval.dev",
+    "commit": "e395a1f"
+  },
+  "name": "Dan Valinotti",
+  "intro": "I am a Full-Stack Software Engineer with a passion for building clean, performant, and accessible websites and applications. Adaptable, design oriented, and user-focused applications are my specialty, along with strong architecture and solutions skills.",
+  "principles": [
+    {
+      "title": "Performance",
+      "text": "Nothing is better than a beautiful site that doesn't make you wait. Performance is one of my top priorities when doing any kind of software development, and this website is a testament to that. The website is built with Nuxt.js, which allows me to write clean, maintainable source code that is statically-generated for optimal page load times."
+    },
+    {
+      "title": "Accessibility",
+      "text": "Everyone deserves the right to a great user experience on the web. I am committed to making sure that all of my work meets and exceeds web accessibility standards. I use several tools like Axe from Deque to test accessibility, as well as tab-navigating myself to make sure keyboard-only users can do everything they need. If you're having trouble on this site, please reach out to me on my contact page."
+    },
+    {
+      "title": "Privacy",
+      "text": "All users have a right to privacy on the web. I believe that all websites and companies have a responsibility to their users to collect as little data as possible, and make it clear when they are doing so. I am using Plausible for analytics data collection, which is lightweight, and captures only small amounts of user interaction like page views and demographics."
+    }
+  ],
+  "projects": [
+    {
+      "slug": "netflix-ads-suite",
+      "title": "Netflix Ads Suite",
+      "company": "Netflix",
+      "tag": "professional",
+      "position": 0,
+      "description": "Building the UI for Netflix's ad platform creative tools, enabling internal ad account managers to build, develop, and manage ad creatives. Built with React, TypeScript, and GraphQL.",
+      "image": "projects/netflix-ads-suite.png"
+    },
+    {
+      "slug": "rescue-group",
+      "title": "RescueGroup Mobile App",
+      "company": null,
+      "tag": "personal",
+      "position": 0,
+      "description": "I'm working on a React Native-based iOS app aimed at making it easier to rescue animals in need of a home, and make it easier for rescue organizations to find homes for their furry friends.",
+      "image": "projects/rescue-group.png"
+    },
+    {
+      "slug": "ads-creative-studio",
+      "title": "Ads Creative Studio",
+      "company": "Google",
+      "tag": "professional",
+      "position": 1,
+      "description": "A unified home for Google's creative advertising tools, to help you build compelling experiences for video, display and audio ads. Ads Creative Studio will allow creative teams to build and innovate together while increasing productivity and simplifying the overall process to bring a great ad to life.",
+      "image": "projects/ads-creative-studio.png"
+    },
+    {
+      "slug": "dv3",
+      "title": "Google Ads Display & Video 360",
+      "company": "Google",
+      "tag": "professional",
+      "position": 1,
+      "description": "Display & Video 360 is the evolution and consolidation of DoubleClick Bid Manager, Campaign Manager, Studio, and Audience Center. It offers a single tool for planning campaigns, designing and managing creative, organizing and applying audience data, finding and buying inventory, and measuring and optimizing campaigns.",
+      "image": "projects/dv3.png"
+    },
+    {
+      "slug": "express-babel-starter",
+      "title": "Express.js Babel Starter Project",
+      "company": null,
+      "tag": "personal",
+      "position": 1,
+      "description": "A GitHub repo template that makes it easy to start building a Node.js backend application. Includes support for modern ES6 syntax, input validation, GitHub Action templates, Google App Engine deployment, and more. Comes with a Model-View-Controller directory structure for better project organization.",
+      "image": "projects/express-babel-starter.png"
+    },
+    {
+      "slug": "campaign-manager",
+      "title": "Google Ads Campaign Manager",
+      "company": "Google",
+      "tag": "professional",
+      "position": 2,
+      "description": "Built new surfaces for recommendations in Google Ads Campaign Manager that help advertisers increase campaign performance through actionable asset insights. Developed with Angular TypeScript on the frontend and Java on the backend.",
+      "image": "projects/campaign-manager.png"
+    },
+    {
+      "slug": "hue-morse-messenger",
+      "title": "Hue Morse Messenger",
+      "company": null,
+      "tag": "personal",
+      "position": 3,
+      "description": "My first React Native + Expo app, which utilized Philips' Hue Smart Lightbulb API, enabling users to send Morse Code messages to rooms in their house by flashing the lights. This also involved building a desktop app with React/Electron that starts an Express app to connect to Philips' Hue API. Not practical, but very fun!",
+      "image": "projects/hue-morse-messenger.png"
+    },
+    {
+      "slug": "hum-by-colgate",
+      "title": "hum by Colgate",
+      "company": "Colgate-Palmolive",
+      "tag": "professional",
+      "position": 3,
+      "description": "Launched a new \"sub-brand\" of Colgate called hum with a headless DTC E-commerce website. Built with Nuxt.js on the frontend, using Shopify as a backend CMS for handling products, customers, orders and checkouts. We also used Three.js and GSAP to create cool, fluid animations throughout the site.",
+      "image": "projects/hum-by-colgate.png"
+    },
+    {
+      "slug": "co-by-colgate",
+      "title": "CO. by Colgate",
+      "company": "Colgate-Palmolive",
+      "tag": "professional",
+      "position": 4,
+      "description": "Colgate's second \"sub-brand\" launch of CO. by Colgate, with a Gen-Z focused oral care brand on a headless DTC E-commerce site. Built with Nuxt.js on the frontend, and Shopify as a backend CMS for products, orders, customers etc. A very unique design that also keeps accessibility in mind.",
+      "image": "projects/co-by-colgate.png"
+    },
+    {
+      "slug": "rust-sandbox",
+      "title": "Rust Sandbox",
+      "company": null,
+      "tag": "personal",
+      "position": 4,
+      "description": "Web app that allows users to write and execute Rust code in their browser. Built with React + Next.js with TypeScript.",
+      "image": "projects/rust-sandbox.png"
+    },
+    {
+      "slug": "vue-vimeo",
+      "title": "Vue Vimeo Player",
+      "company": null,
+      "tag": "personal",
+      "position": 4,
+      "description": "Vue.js component for embedding Vimeo videos, with several options and event hooks for custom behavior.",
+      "image": "projects/vue-vimeo.png"
+    },
+    {
+      "slug": "cgen-cli",
+      "title": "React Component Generator CLI",
+      "company": null,
+      "tag": "personal",
+      "position": 5,
+      "description": "CLI tool built with OCLIF that allows developers to quickly generate files for React components. Supports JavaScript or Typescript, and mulitple component styling options.",
+      "image": "projects/cgen-cli.png"
+    },
+    {
+      "slug": "farrell-partnership",
+      "title": "Farrell Partnership Website",
+      "company": "Freelance",
+      "tag": "professional",
+      "position": 5,
+      "description": "Designed, developed and deployed a new brand website for Farrell Partnership, LLC., an architecture firm based in New Jersey. I used Vue + Nuxt for server-side rendering, and Strapi.io for a CMS which greatly improved speed, user experience, and site reliability compared to the previous WordPress site.",
+      "image": "projects/farrell-partnership.png"
+    }
+  ],
+  "experience": [
+    {
+      "title": "UI Software Engineer",
+      "at": "Netflix",
+      "start": "Oct 2025",
+      "end": "Present",
+      "description": "Building creative development and management tools for Netflix Ads Suite, enabling internal ad account managers to build, manage, and deliver ad creatives across the Netflix Ads platform. Using React, TypeScript, GraphQL, and modern CSS."
+    },
+    {
+      "title": "Software Engineer",
+      "at": "Google",
+      "start": "Oct 2021",
+      "end": "Sept 2025",
+      "description": "Worked on Google Ads products for dynamic creative ad development, including Ads Creative Studio, Display & Video 360, and Studio. Built new recommendation surfaces in Google Ads Campaign Manager to help advertisers improve performance through asset insights. Used AngularDart, Angular TypeScript for frontend and Java for backend."
+    },
+    {
+      "title": "Full Stack Developer",
+      "at": "Colgate-Palmolive",
+      "start": "Jan 2020",
+      "end": "Oct 2021",
+      "description": "E-commerce web app development in the DTC group, launching 2 new brands with headless frontend Shopify GraphQL sites built with Vue + Nuxt. Supported development of an existing Shopify Liquid. Developed Node.js modules and micro-backends to support extended site functionality. Deployed serverless applications with GCP."
+    },
+    {
+      "title": "Software Engineer",
+      "at": "GalaxE Solutions",
+      "start": "May 2019",
+      "end": "Dec 2019",
+      "description": "Developed full-stack applications for clients in the healthcare industry. Built a market price tracking application for a financial team with Java + Spring in the backend and a React SPA on the frontend. Deployed scheduled and serverless functions with AWS and Python."
+    },
+    {
+      "title": "Web Development Intern",
+      "at": "Aardvark Brigade",
+      "start": "Sept 2018",
+      "end": "Apr 2019",
+      "description": "Developed a range of WordPress websites for a web design agency. Learned the foundations of web development with CSS3, HTML5, and PHP. Configured local + production development with Gulp/Grunt and Vagrant."
+    }
+  ],
+  "contact": {
+    "url": "https://dval.dev/contact",
+    "email": "dvalinotti@icloud.com",
+    "github": "github.com/dvalinotti"
+  }
+}

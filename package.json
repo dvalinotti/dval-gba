@@ -1,0 +1,20 @@
+{
+  "name": "dval-gba",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "setup": "git submodule update --init --depth 1 && cd vendor/pocketjs && bun install --frozen-lockfile",
+    "sync": "bun scripts/sync-content.ts",
+    "build": "bun scripts/gen-app.ts && bun host/build.ts",
+    "preview": "bun scripts/screenshots.ts",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.3",
+    "@types/pngjs": "^6.0.5",
+    "jpeg-js": "0.4.4",
+    "pngjs": "7.0.0",
+    "qrcode-generator": "1.4.4",
+    "typescript": "5.9.3"
+  }
+}
