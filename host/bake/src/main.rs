@@ -1,3 +1,13 @@
+//! The baker: a desktop program that renders every state of every sprite
+//! layer of the generated app, for the cartridge to show as hardware sprites.
+//!
+//! In the pipeline, MicroTS compiles `app/` to Rust and plans the sprite
+//! layers. `host/build.ts` writes the plan to `layers.json` in
+//! `GBA_GENERATED` and runs this program, which links the same generated
+//! app the cartridge does. `host/assets.ts` then packs the files it writes
+//! into GBA tiles and the `Layer` table that the cartridge's `scene.rs`
+//! reads.
+//!
 //! Bake the generated app's sprite layers on the host, from the compiler's
 //! layer plan (`layers.json`). Every pixel comes from the retained core's
 //! layout and RGBA rasterizer; the cartridge presents the result as a static
@@ -8,6 +18,25 @@
 //! union of the changed pixels is the layer's crop, padded to the sprite
 //! grid, so no crop is hand-written and a layer that paints outside its crop
 //! cannot exist. `Ui::layout_mismatches` runs after every generated frame.
+//!
+//! It writes these files into the directory named by its one argument:
+//!
+//! - `background.rgb555`: the screen with every layer hidden, except that
+//!   text layers show their static prefix;
+//! - `<layer>-base.rgb555`: the layer's crop of the screen its states were
+//!   diffed against;
+//! - `<layer>-NNN.rgb555`: the layer's crop in state NNN;
+//! - `manifest.json`: the screen size, pixel format and background file,
+//!   and per layer its name, kind, island and translate flags, node path,
+//!   crop, sprite grid, base and frame files, branch signatures, the lower
+//!   layers it was baked over, and its recipe's extra values.
+//!
+//! Pixels are little-endian RGB555 with red in the low bits, the GBA's color
+//! format.
+//!
+//! This repository changes one thing from upstream: after capturing a
+//! `<Show>` branch, the baker destroys every top-level node of the branch,
+//! not only the first (see `host/README.md`).
 
 extern crate alloc;
 
@@ -22,54 +51,88 @@ use std::{
 
 include!(concat!(env!("GBA_GENERATED"), "/include.rs"));
 
+/// The generated app (`AppApp` from `GBA_GENERATED`) with its model.
 type App = generated::AppApp<generated::AppModel>;
 
+/// The compiler's sprite layer plan, read from `layers.json`.
 #[derive(Deserialize)]
 struct Plan {
+    /// Screen size in pixels: [width, height].
     viewport: [usize; 2],
+    /// Frames to run before the first capture, under its snake_case name.
     settle_frames: Option<usize>,
+    /// The same value under the name `host/build.ts` writes.
     #[serde(rename = "settleFrames")]
     settle_frames_camel: Option<usize>,
+    /// The layers in document order. Later layers paint over earlier ones.
     layers: Vec<Layer>,
 }
 
+/// One sprite layer of the plan.
 #[derive(Deserialize)]
 struct Layer {
+    /// `debugName` of the layer's root node.
     name: String,
+    /// Whether the root is a `contain-strict` island. Copied to the manifest.
     island: bool,
+    /// Whether `translateX` or `translateY` bindings move the root at run
+    /// time. Copied to the manifest; it adds no states.
     translate: bool,
+    /// Which states to bake.
     recipe: Recipe,
 }
 
+/// The states a layer can show, selected by the recipe's `kind` field.
 #[derive(Deserialize)]
 #[serde(tag = "kind", rename_all = "lowercase")]
 enum Recipe {
+    /// `<Show>` children of the root: one state per branch.
     Branches { branches: Vec<Branch> },
+    /// An opacity binding on the root: one state, with the root shown.
     Opacity,
+    /// Every integer in `range` (inclusive) as the width or height (`prop`)
+    /// of the node at child path `node`.
     Size { node: Vec<usize>, prop: String, range: [i64; 2] },
+    /// Background colors of the node at `node`: `steps` samples between
+    /// each pair of `endpoints`.
     Color { node: Vec<usize>, endpoints: Vec<u32>, steps: usize },
+    /// One state per character of `glyphs` in the text node at `node`. Up
+    /// to `max_length` glyphs follow the static `prefix`. `font_slot` is the
+    /// font that measures glyph advances.
     Text { node: Vec<usize>, prefix: String, glyphs: String, #[serde(rename = "maxLength")] max_length: usize, #[serde(rename = "fontSlot")] font_slot: u8 },
 }
 
+/// One `<Show>` branch, as the nodes to create for it.
 #[derive(Deserialize)]
 struct Branch {
+    /// In creation order: a node's `parent` indexes an earlier entry.
     nodes: Vec<BranchNode>,
 }
 
+/// One element of a branch.
 #[derive(Deserialize)]
 struct BranchNode {
+    /// Index of the parent in `Branch::nodes`, or -1 for the layer root.
     parent: i64,
+    /// Core node type, passed to `create_node`.
     #[serde(rename = "nodeType")]
     node_type: u8,
+    /// Style id.
     style: i32,
+    /// Text content, for text nodes.
     text: Option<String>,
+    /// Image asset name, for image nodes.
     src: Option<String>,
+    /// Static rect [x, y, w, h] relative to the parent, or none inside a
+    /// live island.
     rect: Option<[f32; 4]>,
 }
 
 /// Hardware sprite grids a layer may use; the smallest covering one wins.
+/// Each entry is (object width, object height, grid name in the manifest).
 const GRIDS: [(usize, usize, &str); 2] = [(16, 32, "tall16x32"), (32, 16, "wide32x16")];
 
+/// Depth-first search from `root` for the node whose debug name is `name`.
 fn find_node(ui: &Ui, root: NodeId, name: &str) -> Option<NodeId> {
     if ui.debug_name(root) == Some(name) {
         return Some(root);
@@ -81,6 +144,7 @@ fn find_node(ui: &Ui, root: NodeId, name: &str) -> Option<NodeId> {
 }
 
 /// Follow a child index path over the static siblings of a layer root.
+/// Panics when the path leaves the tree.
 fn follow(ui: &Ui, root: NodeId, path: &[usize]) -> NodeId {
     let mut node = root;
     for &index in path {
@@ -100,24 +164,31 @@ fn frame(app: &mut App) {
     assert!(mismatches.is_empty(), "baked layout differs from the full-tree solve: {mismatches:?}");
 }
 
+/// The viewport the baker captures.
 struct Screen {
+    /// Width in pixels.
     width: usize,
+    /// Height in pixels.
     height: usize,
 }
 
 impl Screen {
+    /// Draws the current tree and returns the screen as RGB555 pixels, row
+    /// by row.
     fn capture(&self, app: &mut App) -> Vec<u16> {
         let core = app.ui_mut().core_mut();
         core.draw();
         let mut pixels = vec![0; self.width * self.height * 4];
         pocketjs_core::raster::render(core, &core.current_draw_list().words, &mut pixels);
+        // RGBA8 to RGB555: the top five bits of each channel, red lowest.
         pixels
             .chunks_exact(4)
             .map(|p| (p[0] as u16 >> 3) | ((p[1] as u16 >> 3) << 5) | ((p[2] as u16 >> 3) << 10))
             .collect()
     }
 
-    /// Bounding box of the pixels where `capture` differs from `base`.
+    /// Bounding box of the pixels where `capture` differs from `base`, as
+    /// [x, y, w, h], or `None` when they are equal.
     fn changed(&self, capture: &[u16], base: &[u16]) -> Option<[usize; 4]> {
         let (mut x0, mut y0, mut x1, mut y1) = (usize::MAX, usize::MAX, 0, 0);
         for (index, (&a, &b)) in capture.iter().zip(base).enumerate() {
@@ -133,6 +204,8 @@ impl Screen {
         (x1 > 0).then_some([x0, y0, x1 - x0, y1 - y0])
     }
 
+    /// Cuts `rect` ([x, y, w, h]) out of a capture. Pixels outside the
+    /// screen are 0.
     fn crop(&self, capture: &[u16], rect: [i64; 4]) -> Vec<u16> {
         let [x, y, w, h] = rect;
         let mut out = Vec::with_capacity((w * h) as usize);
@@ -145,11 +218,14 @@ impl Screen {
     }
 }
 
+/// Writes `pixels` to `out/name` as little-endian 16-bit values.
 fn write_frame(out: &Path, name: &str, pixels: &[u16]) {
     let bytes: Vec<u8> = pixels.iter().flat_map(|p| p.to_le_bytes()).collect();
     fs::write(out.join(name), bytes).unwrap();
 }
 
+/// Smallest box ([x, y, w, h]) that contains both boxes. `None` is an
+/// empty box.
 fn union(a: Option<[usize; 4]>, b: Option<[usize; 4]>) -> Option<[usize; 4]> {
     match (a, b) {
         (None, b) => b,
@@ -179,6 +255,9 @@ fn pad(bbox: [usize; 4]) -> ([i64; 4], &'static str) {
     )
 }
 
+/// Reads the plan, mounts the app as the cartridge does, captures the
+/// background, bakes every layer in two passes, and writes the frames and
+/// `manifest.json` to the directory named by the first argument.
 fn main() {
     let out = PathBuf::from(std::env::args_os().nth(1).expect("Usage: pocketjs-gba-bake OUTPUT_DIRECTORY"));
     fs::create_dir_all(&out).unwrap();
@@ -186,6 +265,9 @@ fn main() {
     let screen = Screen { width: plan.viewport[0], height: plan.viewport[1] };
     let settle = plan.settle_frames.or(plan.settle_frames_camel).unwrap_or(40);
 
+    // The same viewport, tick rate and styles as the cartridge's `mount`.
+    // Fonts and images load here because the baker rasterizes text and
+    // images; the cartridge only shows the resulting tiles.
     let mut ui = Ui::new();
     ui.core_mut().set_viewport(screen.width as f32, screen.height as f32);
     assert!(ui.core_mut().set_tick_rate(30));
@@ -201,6 +283,8 @@ fn main() {
         frame(&mut app);
     }
 
+    // Find every layer root, then hide them all. A layer is shown or hidden
+    // through its root's opacity.
     let roots: Vec<NodeId> = plan
         .layers
         .iter()
@@ -226,6 +310,10 @@ fn main() {
 
     /// Drive one layer through its recipe's states and capture each; `base` is
     /// the screen with the layer hidden, for text layers with an empty run.
+    ///
+    /// Returns `base`, one capture per state with that state's manifest
+    /// keys, and the recipe's extra manifest fields. The layer is hidden
+    /// again at the end, except a text layer.
     fn enumerate(screen: &Screen, app: &mut App, layer: &Layer, root: NodeId, hide: &dyn Fn(&mut App, NodeId, bool), background: &[u16]) -> (Vec<u16>, Vec<(Vec<u16>, serde_json::Value)>, serde_json::Value) {
         hide(app, root, false);
         let mut captures: Vec<(Vec<u16>, serde_json::Value)> = Vec::new();
@@ -242,6 +330,8 @@ fn main() {
                 }
                 base = screen.capture(app);
                 for branch in branches {
+                    // Create the branch's nodes as the plan lists them: node
+                    // type, static rect, parent, style, text and image.
                     let mut ids: Vec<NodeId> = Vec::new();
                     for node in &branch.nodes {
                         let id = app.ui_mut().create_node(node.node_type);
@@ -275,6 +365,7 @@ fn main() {
             Recipe::Opacity => captures.push((screen.capture(app), json!({}))),
             Recipe::Size { node, prop: which, range } => {
                 let target = follow(app.ui(), root, node);
+                // One capture per integer size.
                 let id = if which == "height" { prop::HEIGHT } else { prop::WIDTH };
                 for value in range[0]..=range[1] {
                     app.ui_mut().set_prop(target, id, value as f64);
@@ -284,6 +375,10 @@ fn main() {
             }
             Recipe::Color { node, endpoints, steps } => {
                 let target = follow(app.ui(), root, node);
+                // `steps` colors at equal intervals from one endpoint to the
+                // other, for each pair of endpoints, without duplicates.
+                // When that gives nothing (fewer than two endpoints, or
+                // `steps` is 0), the endpoints are the samples.
                 let mut samples: Vec<u32> = Vec::new();
                 for (i, &a) in endpoints.iter().enumerate() {
                     for &b in &endpoints[i + 1..] {
@@ -306,6 +401,8 @@ fn main() {
             }
             Recipe::Text { node, prefix, glyphs, max_length, font_slot } => {
                 let target = follow(app.ui(), root, node);
+                // Capture each glyph alone, against an empty run. The
+                // prefix's width places the first glyph on the cartridge.
                 app.ui_mut().set_text(target, "");
                 base = screen.capture(app);
                 let prefix_advance = app.ui().core().measure_text(prefix, *font_slot);
@@ -317,6 +414,7 @@ fn main() {
                     captures.push((screen.capture(app), json!({ "char": text, "advance": advance })));
                     table.push(json!({ "char": glyph.to_string(), "advance": advance }));
                 }
+                // Put the prefix back, as the background shows it.
                 app.ui_mut().set_text(target, prefix);
                 extra = json!({ "prefix": prefix, "prefixAdvance": prefix_advance, "maxLength": max_length, "glyphs": table });
             }
@@ -342,6 +440,7 @@ fn main() {
         }
         masks.push(mask);
     }
+    // below[i] lists the earlier layers whose painted pixels overlap layer i's.
     let below: Vec<Vec<usize>> = (0..count)
         .map(|upper| (0..upper).filter(|&lower| masks[upper].iter().zip(&masks[lower]).any(|(&a, &b)| a && b)).collect())
         .collect();
@@ -352,6 +451,9 @@ fn main() {
         for &lower in &below[index] {
             hide(&mut app, roots[lower], false);
         }
+        // The backdrop is the background when the layer overlaps nothing
+        // below it. Otherwise it is a capture with those lower layers shown,
+        // and with this layer hidden if it is a text layer.
         let backdrop = if below[index].is_empty() {
             background.clone()
         } else {
@@ -366,6 +468,8 @@ fn main() {
             shot
         };
         let (base, captures, extra) = enumerate(&screen, &mut app, layer, root, &hide, &backdrop);
+        // Hide the lower layers again. Text layers stay shown with their
+        // prefix, as everywhere else.
         for &lower in &below[index] {
             if !matches!(plan.layers[lower].recipe, Recipe::Text { .. }) {
                 hide(&mut app, roots[lower], true);
@@ -380,6 +484,7 @@ fn main() {
         // Padded crops may overlap; the packer rejects a lower layer whose
         // pixels under an upper layer differ between its states.
         let (crop, grid) = pad(bbox);
+        // Write the base and every state, cut to the padded crop.
         let base_file = format!("{}-base.rgb555", layer.name);
         write_frame(&out, &base_file, &screen.crop(&base, crop));
         let frames: Vec<serde_json::Value> = captures
@@ -404,6 +509,8 @@ fn main() {
             Recipe::Size { node, .. } | Recipe::Color { node, .. } | Recipe::Text { node, .. } => node.clone(),
             _ => Vec::new(),
         };
+        // The cartridge recognizes a mounted branch by its first node's
+        // style, image and text.
         let signatures: Vec<serde_json::Value> = match &layer.recipe {
             Recipe::Branches { branches } => branches.iter().map(|branch| {
                 let first = &branch.nodes[0];
@@ -411,6 +518,7 @@ fn main() {
             }).collect(),
             _ => Vec::new(),
         };
+        // The manifest entry for `host/assets.ts`, plus the recipe's extras.
         let mut entry = json!({
             "name": layer.name, "kind": kind, "island": layer.island, "translate": layer.translate,
             "node": node_path, "crop": crop, "grid": grid, "base": base_file, "frames": frames, "signatures": signatures,

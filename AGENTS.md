@@ -54,7 +54,7 @@ The generator lays pages out in absolute screen pixels on an 8 px grid. Press St
 
 ## Code style
 
-Prettier formats every file, with the same settings as dval.dev (no semicolons, single quotes, 80 columns). Beyond formatting: one declaration per line, braces on any `if` or `for` whose body spans lines, named constants for layout numbers and hardware values, and shared helpers instead of copied loops.
+Prettier formats the TypeScript, JSON and Markdown, with the same settings as dval.dev (no semicolons, single quotes, 80 columns). The Rust in `host/` keeps upstream PocketJS's layout, which is close to but not entirely rustfmt-clean, so don't run `cargo fmt` over it wholesale. Every Rust item has a doc comment saying what it does; keep that up when you add one, and use `//` rather than `///` inside function bodies. In `start.s`, don't write braces, even in comments: `global_asm!` reads the file as a format string. Beyond formatting: one declaration per line, braces on any `if` or `for` whose body spans lines, named constants for layout numbers and hardware values, and shared helpers instead of copied loops.
 
 ## Checking a change
 

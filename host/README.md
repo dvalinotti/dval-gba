@@ -16,4 +16,10 @@ Changes from upstream:
 | `bake/src/main.rs`                     | Destroys every top-level node of a `<Show>` branch after capturing it, not only the first, so a branch with several top-level elements does not bleed into the next capture              |
 | `Cargo.toml`, `bake/Cargo.toml`        | Engine paths point at `vendor/pocketjs`                                                                                                                                                  |
 
+Beyond those behavior changes, every file here carries added comments, named
+constants for hardware registers and addresses (including the diagnostic words
+in `src/main.rs`'s `diag_word`), and the TypeScript is formatted with the
+repository's Prettier settings. Compare against upstream with that in mind: the
+code paths match the table above, but the text does not.
+
 The baker fix and the stack placement are candidates to send upstream.
