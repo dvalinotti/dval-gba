@@ -1,0 +1,83 @@
+# Build the cartridge and upload the ROM as a workflow artifact.
+#
+# The ROM is not committed (dist/ is ignored), so this is where a playable
+# build comes from: open a run, download the "dval-gba-<sha>" artifact and
+# load dval-gba.gba in mGBA or any other GBA emulator.
+name: Build ROM
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Keep in step with GBA_TOOLCHAIN in host/build.ts.
+  GBA_TOOLCHAIN: nightly-2026-07-01
+  BUN_VERSION: 1.4.2
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out with the PocketJS submodule
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      # Stable runs the desktop baker; the pinned nightly with rust-src
+      # builds core and alloc for the GBA's thumbv4t target.
+      - name: Install Rust toolchains
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup toolchain install "$GBA_TOOLCHAIN" --profile minimal --component rust-src
+          rustup target add wasm32-unknown-unknown
+
+      - name: Cache Cargo downloads and build output
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            .build/target
+            .build/bake-target
+          key: cargo-${{ runner.os }}-${{ env.GBA_TOOLCHAIN }}-${{ hashFiles('host/Cargo.lock', 'host/bake/Cargo.lock', '.gitmodules') }}-${{ github.sha }}
+          restore-keys: |
+            cargo-${{ runner.os }}-${{ env.GBA_TOOLCHAIN }}-${{ hashFiles('host/Cargo.lock', 'host/bake/Cargo.lock', '.gitmodules') }}-
+            cargo-${{ runner.os }}-${{ env.GBA_TOOLCHAIN }}-
+
+      - name: Install dependencies
+        run: |
+          bun install --frozen-lockfile
+          cd vendor/pocketjs && bun install --frozen-lockfile
+
+      - name: Build the ROM
+        run: bun run build
+
+      # app/app.tsx and app/pages.ts are generated and committed, so a
+      # build that changes them means the commit forgot to regenerate.
+      - name: Check the generated app is committed
+        run: git diff --exit-code -- app/
+
+      - name: Upload the ROM
+        uses: actions/upload-artifact@v4
+        with:
+          # On pull requests github.sha is the test merge commit, so name the
+          # artifact after the PR's head commit instead.
+          name: dval-gba-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            dist/dval-gba.gba
+            dist/build.json
+          if-no-files-found: error

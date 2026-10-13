@@ -40,6 +40,8 @@ bun run build        # -> dist/dval-gba.gba
 
 Open `dist/dval-gba.gba` in [mGBA](https://mgba.io) or any GBA emulator. It has not been tested on physical hardware.
 
+To skip the toolchain, download a built ROM instead: every push to `main` and every pull request runs the [Build ROM](.github/workflows/build.yml) workflow, which uploads `dval-gba.gba` as an artifact on the run's summary page.
+
 With libmgba installed (`apt install libmgba-dev` on Debian/Ubuntu), `bun run preview` plays the ROM headlessly and refreshes `docs/screenshots/`; `bun scripts/screenshots.ts --all` captures every page into `.build/all-pages/` for review.
 
 ## Updating the content
