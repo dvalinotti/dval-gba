@@ -74,7 +74,9 @@ jobs:
       - name: Upload the ROM
         uses: actions/upload-artifact@v4
         with:
-          name: dval-gba-${{ github.sha }}
+          # On pull requests github.sha is the test merge commit, so name the
+          # artifact after the PR's head commit instead.
+          name: dval-gba-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
             dist/dval-gba.gba
             dist/build.json
