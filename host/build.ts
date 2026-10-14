@@ -12,10 +12,12 @@
  * what changed is where the app, fonts and images come from.
  */
 import {
+  cpSync,
   existsSync,
   mkdirSync,
   readFileSync,
   readdirSync,
+  rmSync,
   writeFileSync
 } from 'node:fs'
 import { resolve } from 'node:path'
@@ -40,6 +42,8 @@ const pocket = resolve(root, 'vendor/pocketjs')
 const work = resolve(root, '.build')
 const gen = resolve(work, 'generated')
 const appDir = resolve(root, 'app')
+/** Where a build with --start-page compiles its copy of app/. */
+const stagedAppDir = resolve(work, 'app')
 const artDir = resolve(work, 'art')
 
 export const GBA_TOOLCHAIN = 'nightly-2026-07-01'
@@ -203,13 +207,54 @@ function appImages(directories: string[]): Map<string, string> {
   return images
 }
 
+/** Each page's name, by index, from the comment gen-app writes above its branch. */
+function pageNames(): string[] {
+  const view = readFileSync(resolve(appDir, 'app.tsx'), 'utf8')
+  const names: string[] = []
+  const branch = /\{\/\* (\S+) \*\/\}\s*<Show when=\{page\(\) === (\d+)\}>/g
+  for (const [, name, index] of view.matchAll(branch)) {
+    names[Number(index)] = name
+  }
+  return names
+}
+
+/**
+ * The directory to compile the app from. Without a start page that is app/
+ * itself. With one, it is a copy of app/ in .build/app whose START constant
+ * is that page (an index or a page name), so a dev build boots straight to
+ * the page being worked on and the committed files stay as they are.
+ */
+function stageApp(start: string | undefined): string {
+  if (start === undefined) return appDir
+  const names = pageNames()
+  const index = /^\d+$/.test(start) ? Number(start) : names.indexOf(start)
+  if (index < 0 || index >= names.length) {
+    const list = names.map((name, page) => `${page} ${name}`).join(', ')
+    throw new Error(`Unknown start page ${start}; the pages are ${list}`)
+  }
+  rmSync(stagedAppDir, { recursive: true, force: true })
+  cpSync(appDir, stagedAppDir, { recursive: true })
+  const pages = resolve(stagedAppDir, 'pages.ts')
+  const startLine = /^export const START = \d+$/m
+  const constants = readFileSync(pages, 'utf8')
+  if (!startLine.test(constants)) {
+    throw new Error('app/pages.ts has no START; run scripts/gen-app.ts')
+  }
+  writeFileSync(
+    pages,
+    constants.replace(startLine, `export const START = ${index}`)
+  )
+  console.log(`start page ${index} (${names[index]})`)
+  return stagedAppDir
+}
+
 /**
  * Compile app/ to Rust in .build/generated. The layout is solved at build
  * time in the no_std wasm core: the same crate and float math the cartridge
  * runs. Fonts are baked first because text measures during that solve.
  */
-async function compileApp() {
-  const entry = resolve(appDir, 'app.tsx')
+async function compileApp(source: string) {
+  const entry = resolve(source, 'app.tsx')
   const { regularTtf, boldTtf } = pixelFonts(resolve(work, 'fonts'))
   const fonts = await bakeAtlases({
     codepoints: [],
@@ -360,23 +405,27 @@ function compileCartridge() {
 async function main() {
   if (process.argv.includes('--help')) {
     console.log(
-      `bun host/build.ts [--outdir=<directory>]\nRequires rustup toolchain install ${GBA_TOOLCHAIN} --component rust-src`
+      `bun host/build.ts [--outdir=<directory>] [--start-page=<index or name>]\nRequires rustup toolchain install ${GBA_TOOLCHAIN} --component rust-src`
     )
     return
   }
   const options = process.argv.slice(2)
-  if (options.some((arg) => !arg.startsWith('--outdir='))) {
+  const option = (name: string) =>
+    options.find((arg) => arg.startsWith(name))?.slice(name.length)
+  if (
+    options.some(
+      (arg) => !arg.startsWith('--outdir=') && !arg.startsWith('--start-page=')
+    )
+  ) {
     throw new Error('Unknown argument; use --help')
   }
-  const outdir = options.find((arg) => arg.startsWith('--outdir='))
-  const out = resolve(
-    outdir?.slice('--outdir='.length) ?? resolve(root, 'dist')
-  )
+  const outdir = option('--outdir=')
+  const out = resolve(outdir ?? resolve(root, 'dist'))
   mkdirSync(out, { recursive: true })
   mkdirSync(gen, { recursive: true })
 
   buildArt(artDir)
-  const result = await compileApp()
+  const result = await compileApp(stageApp(option('--start-page=')))
   const bake = bakeLayers()
   const cartridge = compileCartridge()
   const rom = gbaRom(cartridge.elf, ROM_TITLE, ROM_CODE)

@@ -44,6 +44,8 @@ To skip the toolchain, download a built ROM instead: every push to `main` and ev
 
 With libmgba installed (`apt install libmgba-dev` on Debian/Ubuntu), `bun run preview` plays the ROM headlessly and refreshes `docs/screenshots/`; `bun scripts/screenshots.ts --all` captures every page into `.build/all-pages/` for review.
 
+While working on the cartridge, `bun run dev` rebuilds the ROM whenever a source file changes and reopens it in [mGBA](https://mgba.io). A rebuild takes about 30 seconds. Name a page to boot straight to it instead of the title screen, for example `bun run dev project-dv3` or `bun run dev 12` (page names are the comments above each branch in `app/app.tsx`). Dev ROMs go to `.build/dev/`, so `dist/` keeps the normal build. If mGBA isn't in `/Applications` or on your `PATH` as `mgba-qt`, set `MGBA` to its path.
+
 ## Updating the content
 
 ```sh

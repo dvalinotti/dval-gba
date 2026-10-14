@@ -3,7 +3,14 @@
 // i32 numbers, named functions and signals (see AGENTS.md).
 import { createSignal } from 'solid-js'
 import { frames, type i32 } from '@pocketjs/framework/solid/std'
-import { MENU, SECTIONS, SECTION_PAGES, SECTION_START, TITLE } from './pages'
+import {
+  MENU,
+  SECTIONS,
+  SECTION_PAGES,
+  SECTION_START,
+  START,
+  TITLE
+} from './pages'
 
 /** sectionOf's answer for the title and menu pages. */
 const NO_SECTION = -1
@@ -13,7 +20,7 @@ const BEAT_FRAMES = 12
 const I32_MAX = 2147483647
 
 /** The page on screen: an index into the branches app/app.tsx generates. */
-export const [page, setPage] = createSignal<i32>(TITLE)
+export const [page, setPage] = createSignal<i32>(START)
 /** Which of the header heart's two frames is showing. */
 export const [beat, setBeat] = createSignal<i32>(0)
 

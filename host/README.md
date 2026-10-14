@@ -8,13 +8,13 @@ presents a static Mode 0 background plus hardware sprites.
 
 Changes from upstream:
 
-| File                                   | Change                                                                                                                                                                                                           |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `build.ts`                             | Builds `app/` from this repo; bakes the Press Start 2P pixel font (`scripts/fonts.ts`), the pixel art (`scripts/art.ts`) and every image an app source names; writes `dist/dval-gba.gba`                         |
-| `src/main.rs`                          | Maps every GBA key (A, B, Select, Start, D-pad, L, R) to PocketJS buttons; drops the Hero-specific counter diagnostic; publishes layer state from diagnostic word 48 instead of 28, clear of the IRQ's key queue |
-| `src/start.s`, `gba.ld`, `src/main.rs` | The user stack is 64 KiB at the top of EWRAM instead of IWRAM. Constructing the app with 28 pre-rendered pages takes a 31 KiB stack frame, which overflowed IWRAM's 32 KiB                                       |
-| `bake/src/main.rs`                     | Destroys every top-level node of a `<Show>` branch after capturing it, not only the first, so a branch with several top-level elements does not bleed into the next capture                                      |
-| `Cargo.toml`, `bake/Cargo.toml`        | Engine paths point at `vendor/pocketjs`                                                                                                                                                                          |
+| File                                   | Change                                                                                                                                                                                                                                                        |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `build.ts`                             | Builds `app/` from this repo; bakes the Press Start 2P pixel font (`scripts/fonts.ts`), the pixel art (`scripts/art.ts`) and every image an app source names; writes `dist/dval-gba.gba`; `--start-page` compiles a copy of `app/` that boots to another page |
+| `src/main.rs`                          | Maps every GBA key (A, B, Select, Start, D-pad, L, R) to PocketJS buttons; drops the Hero-specific counter diagnostic; publishes layer state from diagnostic word 48 instead of 28, clear of the IRQ's key queue                                              |
+| `src/start.s`, `gba.ld`, `src/main.rs` | The user stack is 64 KiB at the top of EWRAM instead of IWRAM. Constructing the app with 28 pre-rendered pages takes a 31 KiB stack frame, which overflowed IWRAM's 32 KiB                                                                                    |
+| `bake/src/main.rs`                     | Destroys every top-level node of a `<Show>` branch after capturing it, not only the first, so a branch with several top-level elements does not bleed into the next capture                                                                                   |
+| `Cargo.toml`, `bake/Cargo.toml`        | Engine paths point at `vendor/pocketjs`                                                                                                                                                                                                                       |
 
 Beyond those behavior changes, every file here carries added comments, named
 constants for hardware registers and addresses (including the diagnostic words

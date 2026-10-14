@@ -501,6 +501,8 @@ await write(
   `
 /** The title screen. */
 export const TITLE = ${TITLE};
+/** The page the cartridge boots to. \`bun run dev <page>\` builds with another. */
+export const START = ${TITLE};
 /** The first menu page. Page MENU + i is the menu with section i highlighted. */
 export const MENU = ${MENU};
 /** How many sections the menu lists. */
