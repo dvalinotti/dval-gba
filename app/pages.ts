@@ -2,6 +2,8 @@
 
 /** The title screen. */
 export const TITLE = 0
+/** The page the cartridge boots to. `bun run dev <page>` builds with another. */
+export const START = 0
 /** The first menu page. Page MENU + i is the menu with section i highlighted. */
 export const MENU = 1
 /** How many sections the menu lists. */

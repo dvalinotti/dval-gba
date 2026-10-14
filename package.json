@@ -6,6 +6,7 @@
     "setup": "git submodule update --init --depth 1 && cd vendor/pocketjs && bun install --frozen-lockfile",
     "sync": "bun scripts/sync-content.ts",
     "build": "bun scripts/gen-app.ts && bun host/build.ts",
+    "dev": "bun scripts/dev.ts",
     "preview": "bun scripts/screenshots.ts",
     "typecheck": "tsc --noEmit -p .",
     "format": "prettier --write .",
